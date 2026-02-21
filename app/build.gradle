@@ -65,6 +65,9 @@ dependencies {
     // FlexboxLayout (키워드 태그 표시용)
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
 
+    // Jsoup (링크 콘텐츠 파싱용)
+    implementation 'org.jsoup:jsoup:1.17.2'
+
     // Test
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

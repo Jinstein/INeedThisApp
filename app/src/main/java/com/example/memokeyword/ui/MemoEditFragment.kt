@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -53,6 +54,7 @@ class MemoEditFragment : Fragment() {
         setupKeywordInput()
         setupAutoExtract()
         setupSaveButton()
+        setupLinkFetch()
         observeViewModel()
 
         if (existingMemoId != 0L) {
@@ -108,6 +110,25 @@ class MemoEditFragment : Fragment() {
         }
     }
 
+    private fun setupLinkFetch() {
+        binding.btnFetchLink.setOnClickListener {
+            val url = binding.etLinkUrl.text.toString().trim()
+            if (url.isBlank()) {
+                Toast.makeText(requireContext(), "URL을 입력해주세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            viewModel.fetchLinkContent(url)
+        }
+
+        binding.etLinkUrl.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                val url = binding.etLinkUrl.text.toString().trim()
+                if (url.isNotBlank()) viewModel.fetchLinkContent(url)
+                true
+            } else false
+        }
+    }
+
     private fun setupSaveButton() {
         binding.btnSave.setOnClickListener {
             val title = binding.etTitle.text.toString().trim()
@@ -131,6 +152,33 @@ class MemoEditFragment : Fragment() {
             if (msg != null) {
                 Toast.makeText(requireContext(), msg, Toast.LENGTH_SHORT).show()
                 viewModel.clearError()
+            }
+        }
+
+        viewModel.linkFetchLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.progressLinkFetch.isVisible = isLoading
+            binding.btnFetchLink.isEnabled = !isLoading
+        }
+
+        viewModel.linkFetchResult.observe(viewLifecycleOwner) { linkContent ->
+            if (linkContent != null) {
+                // 제목이 비어 있으면 링크 페이지 제목으로 채움
+                if (binding.etTitle.text.isNullOrBlank() && linkContent.title.isNotBlank()) {
+                    binding.etTitle.setText(linkContent.title)
+                }
+
+                // 기존 내용 뒤에 링크 내용 추가
+                val currentContent = binding.etContent.text.toString()
+                val separator = if (currentContent.isNotBlank()) "\n\n" else ""
+                val appendedContent = "$currentContent$separator${linkContent.content}"
+                binding.etContent.setText(appendedContent)
+                binding.etContent.setSelection(appendedContent.length)
+
+                // URL 입력란 초기화
+                binding.etLinkUrl.text?.clear()
+
+                Toast.makeText(requireContext(), "링크 내용을 가져왔습니다.", Toast.LENGTH_SHORT).show()
+                viewModel.clearLinkFetchResult()
             }
         }
     }
