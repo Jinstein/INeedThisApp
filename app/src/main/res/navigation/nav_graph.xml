@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/memoListFragment">
+
+    <fragment
+        android:id="@+id/memoListFragment"
+        android:name="com.example.memokeyword.ui.MemoListFragment"
+        android:label="내 메모"
+        tools:layout="@layout/fragment_memo_list">
+        <action
+            android:id="@+id/action_memo_list_to_memo_edit"
+            app:destination="@id/memoEditFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/memoEditFragment"
+        android:name="com.example.memokeyword.ui.MemoEditFragment"
+        android:label="메모 작성"
+        tools:layout="@layout/fragment_memo_edit">
+        <argument
+            android:name="memoId"
+            app:argType="long"
+            android:defaultValue="0" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.example.memokeyword.ui.SearchFragment"
+        android:label="검색"
+        tools:layout="@layout/fragment_search">
+        <action
+            android:id="@+id/action_search_to_memo_edit"
+            app:destination="@id/memoEditFragment" />
+    </fragment>
+
+</navigation>
