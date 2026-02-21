@@ -82,6 +82,12 @@ class MemoEditFragment : Fragment() {
             loadExistingMemo()
         } else {
             viewModel.clearEditPhotos()
+            // 스크린샷 감지로 전달된 URI가 있으면 자동 첨부
+            val pendingUri = viewModel.pendingScreenshotUri.value
+            if (pendingUri != null) {
+                viewModel.addPhotos(listOf(pendingUri))
+                viewModel.clearPendingScreenshot()
+            }
         }
     }
 

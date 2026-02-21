@@ -151,6 +151,18 @@ class MemoViewModel(private val repository: MemoRepository) : ViewModel() {
         _saveResult.value = null
     }
 
+    // 스크린샷 감지 후 메모 편집 화면으로 전달할 대기 중인 URI
+    private val _pendingScreenshotUri = MutableLiveData<Uri?>()
+    val pendingScreenshotUri: LiveData<Uri?> = _pendingScreenshotUri
+
+    fun setPendingScreenshot(uri: Uri) {
+        _pendingScreenshotUri.value = uri
+    }
+
+    fun clearPendingScreenshot() {
+        _pendingScreenshotUri.value = null
+    }
+
     enum class SearchMode {
         KEYWORD, CONTENT
     }
