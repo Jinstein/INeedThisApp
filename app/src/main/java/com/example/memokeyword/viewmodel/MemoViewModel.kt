@@ -1,8 +1,11 @@
 package com.example.memokeyword.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.*
 import com.example.memokeyword.data.Keyword
 import com.example.memokeyword.data.Memo
+import com.example.memokeyword.data.MemoPhoto
 import com.example.memokeyword.data.MemoWithKeywords
 import com.example.memokeyword.repository.MemoRepository
 import com.example.memokeyword.util.LinkContentFetcher
@@ -46,7 +49,33 @@ class MemoViewModel(private val repository: MemoRepository) : ViewModel() {
     private val _linkFetchLoading = MutableLiveData<Boolean>(false)
     val linkFetchLoading: LiveData<Boolean> = _linkFetchLoading
 
+    // 편집 화면의 첨부 사진 URI 목록 (최대 5개)
+    private val _editPhotoUris = MutableLiveData<List<Uri>>(emptyList())
+    val editPhotoUris: LiveData<List<Uri>> = _editPhotoUris
+
+    fun addPhotos(uris: List<Uri>) {
+        val current = _editPhotoUris.value ?: emptyList()
+        val combined = (current + uris).distinct()
+        if (combined.size > 5) {
+            _errorMessage.value = "사진은 최대 5개까지만 첨부할 수 있습니다."
+        }
+        _editPhotoUris.value = combined.take(5)
+    }
+
+    fun removePhoto(uri: Uri) {
+        _editPhotoUris.value = (_editPhotoUris.value ?: emptyList()) - uri
+    }
+
+    fun setEditPhotosFromPaths(filePaths: List<String>) {
+        _editPhotoUris.value = filePaths.map { Uri.parse("file://$it") }
+    }
+
+    fun clearEditPhotos() {
+        _editPhotoUris.value = emptyList()
+    }
+
     fun saveMemo(
+        context: Context,
         title: String,
         content: String,
         userKeywords: List<String>,
@@ -56,9 +85,10 @@ class MemoViewModel(private val repository: MemoRepository) : ViewModel() {
             _errorMessage.value = "제목 또는 내용을 입력해주세요."
             return
         }
+        val photoUris = _editPhotoUris.value ?: emptyList()
         viewModelScope.launch {
             try {
-                val id = repository.saveMemo(title, content, userKeywords, memoId)
+                val id = repository.saveMemo(context, title, content, userKeywords, photoUris, memoId)
                 _saveResult.value = id
             } catch (e: Exception) {
                 _errorMessage.value = "저장 중 오류가 발생했습니다: ${e.message}"
@@ -78,12 +108,15 @@ class MemoViewModel(private val repository: MemoRepository) : ViewModel() {
 
     fun setSearchMode(mode: SearchMode) {
         _searchMode.value = mode
-        // 모드 변경 시 검색 재실행
         _searchQuery.value = _searchQuery.value
     }
 
     suspend fun getMemoWithKeywords(memoId: Long): MemoWithKeywords? {
         return repository.getMemoWithKeywords(memoId)
+    }
+
+    suspend fun getPhotosForMemo(memoId: Long): List<MemoPhoto> {
+        return repository.getPhotosForMemo(memoId)
     }
 
     suspend fun searchKeywordSuggestions(prefix: String): List<Keyword> {

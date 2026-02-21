@@ -15,5 +15,10 @@ data class MemoWithKeywords(
             entityColumn = "keywordId"
         )
     )
-    val keywords: List<Keyword>
+    val keywords: List<Keyword>,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "memoId"
+    )
+    val photos: List<MemoPhoto> = emptyList()
 )

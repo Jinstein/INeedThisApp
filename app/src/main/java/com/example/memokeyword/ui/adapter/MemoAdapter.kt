@@ -1,8 +1,11 @@
 package com.example.memokeyword.ui.adapter
 
+import android.net.Uri
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.example.memokeyword.data.MemoWithKeywords
@@ -27,16 +30,34 @@ class MemoAdapter(
     inner class MemoViewHolder(private val binding: ItemMemoBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
+        private val photoAdapter = PhotoThumbnailAdapter(onRemoveClick = null)
+
+        init {
+            binding.rvPhotoPreview.apply {
+                layoutManager = LinearLayoutManager(binding.root.context, LinearLayoutManager.HORIZONTAL, false)
+                adapter = photoAdapter
+            }
+        }
+
         fun bind(item: MemoWithKeywords) {
             binding.tvTitle.text = item.memo.title.ifBlank { "(제목 없음)" }
             binding.tvContent.text = item.memo.content
             binding.tvDate.text = formatDate(item.memo.updatedAt)
 
-            // 키워드 태그 표시 (최대 5개)
             val keywordText = item.keywords
                 .take(5)
                 .joinToString("  ") { "#${it.word}" }
             binding.tvKeywords.text = keywordText
+
+            val sortedPhotos = item.photos.sortedBy { it.orderIndex }
+            if (sortedPhotos.isNotEmpty()) {
+                val uris = sortedPhotos.map { Uri.parse("file://${it.filePath}") }
+                photoAdapter.setPhotos(uris)
+                binding.rvPhotoPreview.visibility = View.VISIBLE
+            } else {
+                photoAdapter.setPhotos(emptyList())
+                binding.rvPhotoPreview.visibility = View.GONE
+            }
 
             binding.root.setOnClickListener { onMemoClick(item) }
             binding.root.setOnLongClickListener { onMemoLongClick(item) }
@@ -53,6 +74,6 @@ class MemoAdapter(
             old.memo.id == new.memo.id
 
         override fun areContentsTheSame(old: MemoWithKeywords, new: MemoWithKeywords) =
-            old.memo == new.memo && old.keywords == new.keywords
+            old.memo == new.memo && old.keywords == new.keywords && old.photos == new.photos
     }
 }
