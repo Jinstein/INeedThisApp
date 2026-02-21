@@ -1,9 +1,11 @@
 package com.example.memokeyword.ui
 
+import android.net.Uri
 import android.os.Bundle
 import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -11,10 +13,12 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.memokeyword.data.AppDatabase
 import com.example.memokeyword.databinding.FragmentMemoEditBinding
 import com.example.memokeyword.repository.MemoRepository
 import com.example.memokeyword.ui.adapter.KeywordChipAdapter
+import com.example.memokeyword.ui.adapter.PhotoThumbnailAdapter
 import com.example.memokeyword.util.KeywordExtractor
 import com.example.memokeyword.viewmodel.MemoViewModel
 import com.example.memokeyword.viewmodel.MemoViewModelFactory
@@ -32,11 +36,26 @@ class MemoEditFragment : Fragment() {
 
     private val viewModel: MemoViewModel by activityViewModels {
         val db = AppDatabase.getDatabase(requireContext())
-        MemoViewModelFactory(MemoRepository(db.memoDao(), db.keywordDao()))
+        MemoViewModelFactory(MemoRepository(db.memoDao(), db.keywordDao(), db.memoPhotoDao()))
     }
 
     private lateinit var keywordAdapter: KeywordChipAdapter
+    private lateinit var photoAdapter: PhotoThumbnailAdapter
     private var existingMemoId: Long = 0L
+
+    private val pickPhotos = registerForActivityResult(
+        ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            val current = viewModel.editPhotoUris.value ?: emptyList()
+            val remaining = 5 - current.size
+            if (remaining <= 0) {
+                Toast.makeText(requireContext(), "사진은 최대 5개까지만 첨부할 수 있습니다.", Toast.LENGTH_SHORT).show()
+                return@registerForActivityResult
+            }
+            viewModel.addPhotos(uris.take(remaining))
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -51,14 +70,18 @@ class MemoEditFragment : Fragment() {
 
         existingMemoId = args.memoId
         setupKeywordRecyclerView()
+        setupPhotoRecyclerView()
         setupKeywordInput()
         setupAutoExtract()
         setupSaveButton()
         setupLinkFetch()
+        setupPhotoButton()
         observeViewModel()
 
         if (existingMemoId != 0L) {
             loadExistingMemo()
+        } else {
+            viewModel.clearEditPhotos()
         }
     }
 
@@ -75,6 +98,27 @@ class MemoEditFragment : Fragment() {
             adapter = keywordAdapter
         }
         keywordAdapter.setKeywords(emptyList(), showRemove = true)
+    }
+
+    private fun setupPhotoRecyclerView() {
+        photoAdapter = PhotoThumbnailAdapter(
+            onRemoveClick = { uri -> viewModel.removePhoto(uri) }
+        )
+        binding.rvPhotos.apply {
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            adapter = photoAdapter
+        }
+    }
+
+    private fun setupPhotoButton() {
+        binding.btnAddPhoto.setOnClickListener {
+            val current = viewModel.editPhotoUris.value ?: emptyList()
+            if (current.size >= 5) {
+                Toast.makeText(requireContext(), "사진은 최대 5개까지만 첨부할 수 있습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            pickPhotos.launch("image/*")
+        }
     }
 
     private fun setupKeywordInput() {
@@ -97,7 +141,6 @@ class MemoEditFragment : Fragment() {
     }
 
     private fun setupAutoExtract() {
-        // 내용 변경 시 키워드 미리보기
         binding.etContent.doAfterTextChanged { text ->
             val content = text.toString()
             val title = binding.etTitle.text.toString()
@@ -135,7 +178,7 @@ class MemoEditFragment : Fragment() {
             val content = binding.etContent.text.toString().trim()
             val userKeywords = keywordAdapter.getKeywords()
 
-            viewModel.saveMemo(title, content, userKeywords, existingMemoId)
+            viewModel.saveMemo(requireContext(), title, content, userKeywords, existingMemoId)
         }
     }
 
@@ -144,6 +187,7 @@ class MemoEditFragment : Fragment() {
             if (id != null) {
                 Toast.makeText(requireContext(), "메모가 저장되었습니다.", Toast.LENGTH_SHORT).show()
                 viewModel.clearSaveResult()
+                viewModel.clearEditPhotos()
                 findNavController().navigateUp()
             }
         }
@@ -162,24 +206,25 @@ class MemoEditFragment : Fragment() {
 
         viewModel.linkFetchResult.observe(viewLifecycleOwner) { linkContent ->
             if (linkContent != null) {
-                // 제목이 비어 있으면 링크 페이지 제목으로 채움
                 if (binding.etTitle.text.isNullOrBlank() && linkContent.title.isNotBlank()) {
                     binding.etTitle.setText(linkContent.title)
                 }
-
-                // 기존 내용 뒤에 링크 내용 추가
                 val currentContent = binding.etContent.text.toString()
                 val separator = if (currentContent.isNotBlank()) "\n\n" else ""
                 val appendedContent = "$currentContent$separator${linkContent.content}"
                 binding.etContent.setText(appendedContent)
                 binding.etContent.setSelection(appendedContent.length)
-
-                // URL 입력란 초기화
                 binding.etLinkUrl.text?.clear()
-
                 Toast.makeText(requireContext(), "링크 내용을 가져왔습니다.", Toast.LENGTH_SHORT).show()
                 viewModel.clearLinkFetchResult()
             }
+        }
+
+        viewModel.editPhotoUris.observe(viewLifecycleOwner) { uris ->
+            photoAdapter.setPhotos(uris)
+            val count = uris.size
+            binding.btnAddPhoto.isEnabled = count < 5
+            binding.btnAddPhoto.text = if (count > 0) "+ 사진 추가 ($count/5)" else "+ 사진 추가"
         }
     }
 
@@ -192,6 +237,10 @@ class MemoEditFragment : Fragment() {
                 val words = mwk.keywords.map { it.word }
                 keywordAdapter.setKeywords(words, showRemove = true)
                 binding.btnSave.text = "수정 완료"
+
+                // 기존 사진 불러오기
+                val photos = viewModel.getPhotosForMemo(existingMemoId)
+                viewModel.setEditPhotosFromPaths(photos.map { it.filePath })
             }
         }
     }

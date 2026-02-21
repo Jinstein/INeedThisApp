@@ -25,7 +25,7 @@ class MemoListFragment : Fragment() {
 
     private val viewModel: MemoViewModel by activityViewModels {
         val db = AppDatabase.getDatabase(requireContext())
-        MemoViewModelFactory(MemoRepository(db.memoDao(), db.keywordDao()))
+        MemoViewModelFactory(MemoRepository(db.memoDao(), db.keywordDao(), db.memoPhotoDao()))
     }
 
     private lateinit var memoAdapter: MemoAdapter

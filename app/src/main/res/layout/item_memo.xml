@@ -45,6 +45,15 @@
             android:textColor="@color/keyword_color"
             android:textSize="12sp" />
 
+        <!-- 사진 썸네일 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_photo_preview"
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:visibility="gone" />
+
         <!-- 날짜 -->
         <TextView
             android:id="@+id/tv_date"
