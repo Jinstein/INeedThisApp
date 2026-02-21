@@ -5,6 +5,7 @@ import com.example.memokeyword.data.Keyword
 import com.example.memokeyword.data.Memo
 import com.example.memokeyword.data.MemoWithKeywords
 import com.example.memokeyword.repository.MemoRepository
+import com.example.memokeyword.util.LinkContentFetcher
 import kotlinx.coroutines.launch
 
 class MemoViewModel(private val repository: MemoRepository) : ViewModel() {
@@ -38,6 +39,12 @@ class MemoViewModel(private val repository: MemoRepository) : ViewModel() {
 
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> = _errorMessage
+
+    private val _linkFetchResult = MutableLiveData<LinkContentFetcher.LinkContent?>()
+    val linkFetchResult: LiveData<LinkContentFetcher.LinkContent?> = _linkFetchResult
+
+    private val _linkFetchLoading = MutableLiveData<Boolean>(false)
+    val linkFetchLoading: LiveData<Boolean> = _linkFetchLoading
 
     fun saveMemo(
         title: String,
@@ -81,6 +88,26 @@ class MemoViewModel(private val repository: MemoRepository) : ViewModel() {
 
     suspend fun searchKeywordSuggestions(prefix: String): List<Keyword> {
         return repository.searchKeywordSuggestions(prefix)
+    }
+
+    fun fetchLinkContent(url: String) {
+        if (!LinkContentFetcher.isValidUrl(url)) {
+            _errorMessage.value = "올바른 URL을 입력해주세요. (http:// 또는 https://로 시작)"
+            return
+        }
+        _linkFetchLoading.value = true
+        viewModelScope.launch {
+            val result = LinkContentFetcher.fetch(url)
+            _linkFetchLoading.value = false
+            result.fold(
+                onSuccess = { _linkFetchResult.value = it },
+                onFailure = { _errorMessage.value = "링크를 읽어오는 데 실패했습니다: ${it.message}" }
+            )
+        }
+    }
+
+    fun clearLinkFetchResult() {
+        _linkFetchResult.value = null
     }
 
     fun clearError() {
