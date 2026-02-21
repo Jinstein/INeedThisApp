@@ -1,4 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">메모 키워드</string>
+
+    <!-- Edge Panel -->
+    <string name="edge_panel_title">메모 키워드</string>
+    <string name="edge_panel_new_memo">메모 작성</string>
+    <string name="edge_panel_screenshot">스크린샷 저장</string>
+    <string name="edge_panel_close">닫기</string>
+    <string name="edge_panel_handle_desc">엣지 패널 열기</string>
+    <string name="edge_panel_notification_channel">엣지 패널</string>
+    <string name="edge_panel_notification_desc">메모 키워드 엣지 패널 서비스</string>
+    <string name="edge_panel_notification_text">엣지 패널이 활성화되어 있습니다</string>
+    <string name="edge_panel_no_permission">화면 캡처 권한이 없습니다</string>
+    <string name="edge_panel_screenshot_failed">스크린샷 저장에 실패했습니다</string>
+
+    <!-- Overlay permission dialog -->
+    <string name="overlay_permission_title">다른 앱 위에 표시 권한 필요</string>
+    <string name="overlay_permission_message">엣지 패널을 사용하려면 다른 앱 위에 표시 권한이 필요합니다. 설정에서 권한을 허용해 주세요.</string>
+    <string name="overlay_permission_go_settings">설정으로 이동</string>
+    <string name="overlay_permission_cancel">취소</string>
+
+    <!-- Screen capture permission -->
+    <string name="screen_capture_title">화면 캡처 권한 요청</string>
 </resources>

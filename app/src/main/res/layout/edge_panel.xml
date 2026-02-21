@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="180dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_edge_panel"
+    android:elevation="12dp"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/edge_panel_title"
+        android:textColor="@color/text_primary"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:paddingBottom="10dp" />
+
+    <Button
+        android:id="@+id/btn_new_memo"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="@string/edge_panel_new_memo"
+        android:drawableStart="@drawable/ic_edge_memo"
+        android:drawablePadding="6dp"
+        android:textSize="13sp"
+        style="@style/Widget.Material3.Button.OutlinedButton" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="8dp" />
+
+    <Button
+        android:id="@+id/btn_screenshot"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="@string/edge_panel_screenshot"
+        android:drawableStart="@drawable/ic_screenshot"
+        android:drawablePadding="6dp"
+        android:textSize="13sp"
+        style="@style/Widget.Material3.Button.OutlinedButton" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="6dp" />
+
+    <Button
+        android:id="@+id/btn_close_panel"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:text="@string/edge_panel_close"
+        android:textSize="12sp"
+        style="@style/Widget.Material3.Button.TextButton" />
+
+</LinearLayout>
