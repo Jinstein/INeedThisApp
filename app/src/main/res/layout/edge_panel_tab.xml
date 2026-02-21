@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="28dp"
+    android:layout_height="72dp"
+    android:background="@drawable/bg_edge_tab"
+    android:gravity="center"
+    android:orientation="vertical">
+
+    <ImageView
+        android:layout_width="16dp"
+        android:layout_height="16dp"
+        android:src="@drawable/ic_drag_handle"
+        android:contentDescription="@string/edge_panel_handle_desc"
+        android:tint="@color/colorOnPrimary" />
+
+</LinearLayout>
